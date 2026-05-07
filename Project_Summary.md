@@ -23,20 +23,15 @@ Polymorphism allows objects of different classes to be treated as objects of a c
 *   Java Development Kit (JDK) installed (Version 8 or higher).
 *   Visual Studio Code with the Java Extension Pack installed, or any other Java IDE (like Eclipse or IntelliJ IDEA).
 
-### Running in Visual Studio Code
-1.  Open Visual Studio Code.
-2.  Go to `File` > `Open Folder...` and select the `TripPlanner` folder.
-3.  Navigate to `src/tripplanner/MainDashboard.java` in the Explorer pane.
-4.  If the Java extension is properly configured, you should see a small `Run` | `Debug` text above the `public static void main(String[] args)` method in `MainDashboard.java`.
-5.  Click **Run**.
-6.  The application window will appear. You can click "Add New Plan" to start inserting items and watch the total cost dynamically update.
+### Running in NetBeans
+1.  Open NetBeans.
+2.  Choose `File` > `Open Project...`.
+3.  Select the project folder. NetBeans will open it as a Maven Java project.
+4.  Wait for dependencies to download.
+5.  Click **Run Project**. The included `nbactions.xml` points NetBeans to the main class: `tripplanner.ui.MainDashboard`.
 
-Alternatively, you can run it from the terminal:
+Alternatively, run it from the terminal with Maven:
 ```bash
-# Navigate to the src directory
-cd src
-# Compile all java files
-javac tripplanner/*.java
-# Run the main class
-java tripplanner.MainDashboard
+mvn compile
+mvn exec:java
 ```

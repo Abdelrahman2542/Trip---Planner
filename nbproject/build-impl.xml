@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="TripPlanner-impl" basedir="..">
+    <!--
+        Lightweight NetBeans build implementation.
+        The public build.xml imports/uses the same targets, and NetBeans can
+        open the project as a Java SE project via nbproject/project.xml.
+    -->
+    <property file="nbproject/project.properties"/>
+
+    <path id="javac.classpath.path">
+        <pathelement path="${javac.classpath}"/>
+    </path>
+
+    <path id="run.classpath.path">
+        <pathelement path="${run.classpath}"/>
+    </path>
+
+    <target name="init">
+        <mkdir dir="${build.classes.dir}"/>
+        <mkdir dir="${dist.dir}"/>
+    </target>
+
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+        <delete dir="${dist.dir}"/>
+    </target>
+
+    <target name="compile" depends="init">
+        <javac srcdir="${src.dir}"
+               destdir="${build.classes.dir}"
+               source="${javac.source}"
+               target="${javac.target}"
+               encoding="${javac.encoding}"
+               includeantruntime="false">
+            <classpath refid="javac.classpath.path"/>
+        </javac>
+    </target>
+
+    <target name="run" depends="compile">
+        <java classname="${main.class}" fork="true">
+            <classpath refid="run.classpath.path"/>
+        </java>
+    </target>
+
+    <target name="jar" depends="compile">
+        <jar destfile="${dist.jar}" basedir="${build.classes.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${main.class}"/>
+            </manifest>
+        </jar>
+    </target>
+</project>

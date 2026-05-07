@@ -39,6 +39,15 @@ buildNumber.properties
 .vscode/
 .history/
 *.code-workspace
+
+# NetBeans
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
 .bloop/
 .metals/
 **/metals.mv.db

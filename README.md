@@ -18,9 +18,11 @@ Built as a university OOP project demonstrating **Encapsulation**, **Inheritance
 
 ```
 TripPlanner/
-├── pom.xml                             ← Maven config (FlatLaf + GSON)
+├── pom.xml                             ← Maven config (FlatLaf + GSON + Exec plugin)
+├── build.xml                           ← NetBeans/Ant build file
+├── nbactions.xml                       ← NetBeans Maven Run/Debug actions
+├── nbproject/                          ← NetBeans Java SE project metadata
 ├── README.md
-├── run.bat                             ← Run script (Windows)
 └── src/
     └── main/
         └── java/
@@ -43,17 +45,39 @@ TripPlanner/
 
 ## How to Build & Run
 
-### Option 1 — Maven (recommended)
+### Option 1 — NetBeans
+
+1. Open NetBeans.
+2. Choose **File → Open Project**.
+3. Select this project folder (`Trip---Planner`). NetBeans can open it as a Java SE project using the included `nbproject/` metadata.
+4. Click **Open Project**.
+5. Click **Run Project** or right-click the project and choose **Run**.
+
+Main class:
+
+```text
+tripplanner.ui.MainDashboard
+```
+
+If NetBeans reports missing FlatLaf/Gson libraries, run Maven once to download them:
+
+```bash
+mvn compile
+```
+
+or open the project as a Maven project if your NetBeans installation has Maven support enabled.
+
+### Option 2 — Maven
 
 ```bash
 # 1. Download dependencies & compile
 mvn compile
 
 # 2. Run directly with Maven
-mvn exec:java -Dexec.mainClass="tripplanner.ui.MainDashboard"
+mvn exec:java
 ```
 
-### Option 2 — Build a runnable JAR
+### Option 3 — Build a runnable JAR
 
 ```bash
 # Creates target/TripPlanner-runnable.jar (all dependencies included)
@@ -62,10 +86,6 @@ mvn package
 # Run the JAR
 java -jar target/TripPlanner-runnable.jar
 ```
-
-### Option 3 — Windows batch script
-
-Double-click `run.bat` (requires the JAR to be built first with `mvn package`).
 
 ---
 
