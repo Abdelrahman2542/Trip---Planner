@@ -92,13 +92,16 @@ public class TripStorage {
         String extra1 = "";
         String extra2 = "";
 
-        if (item instanceof Flight f) {
+        if (item instanceof Flight) {
+            Flight f = (Flight) item;
             extra1 = f.getAirline();
             extra2 = f.getFlightNumber();
-        } else if (item instanceof Hotel h) {
+        } else if (item instanceof Hotel) {
+            Hotel h = (Hotel) item;
             extra1 = h.getCity();
             extra2 = String.valueOf(h.getNumberOfNights());
-        } else if (item instanceof Activity a) {
+        } else if (item instanceof Activity) {
+            Activity a = (Activity) item;
             extra1 = a.getLocation();
             // extra2 remains empty for Activity
         }
@@ -130,13 +133,16 @@ public class TripStorage {
             String extra1 = unescapeCsv(parts[4].trim());
             String extra2 = unescapeCsv(parts[5].trim());
 
-            return switch (type) {
-                case "Flight"   -> new Flight(title, date, cost, extra1, extra2);
-                case "Hotel"    -> new Hotel(title, date, cost, extra1,
-                                             extra2.isEmpty() ? 1 : Integer.parseInt(extra2));
-                case "Activity" -> new Activity(title, date, cost, extra1);
-                default         -> null;
-            };
+            if ("Flight".equals(type)) {
+                return new Flight(title, date, cost, extra1, extra2);
+            } else if ("Hotel".equals(type)) {
+                return new Hotel(title, date, cost, extra1,
+                                 extra2.isEmpty() ? 1 : Integer.parseInt(extra2));
+            } else if ("Activity".equals(type)) {
+                return new Activity(title, date, cost, extra1);
+            } else {
+                return null;
+            }
         } catch (Exception e) {
             // Malformed row — skip silently
             return null;

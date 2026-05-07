@@ -290,30 +290,24 @@ public class InputForm extends JDialog {
 
         // INHERITANCE + POLYMORPHISM: create the right subclass
         try {
-            createdItem = switch (type) {
-                case "Flight" -> {
-                    String airline   = airlineField.getText().trim();
-                    String flightNum = flightNumberField.getText().trim();
-                    if (airline.isEmpty())   { highlight(airlineField);       valid = false; }
-                    if (flightNum.isEmpty()) { highlight(flightNumberField);  valid = false; }
-                    if (!valid) yield null;
-                    yield new Flight(title, dateStr, costValue, airline, flightNum);
-                }
-                case "Hotel" -> {
-                    String city   = hotelCityField.getText().trim();
-                    int    nights = (int) nightsSpinner.getValue();
-                    if (city.isEmpty()) { highlight(hotelCityField); valid = false; }
-                    if (!valid) yield null;
-                    yield new Hotel(title, dateStr, costValue, city, nights);
-                }
-                case "Activity" -> {
-                    String location = locationField.getText().trim();
-                    if (location.isEmpty()) { highlight(locationField); valid = false; }
-                    if (!valid) yield null;
-                    yield new Activity(title, dateStr, costValue, location);
-                }
-                default -> null;
-            };
+            if ("Flight".equals(type)) {
+                String airline   = airlineField.getText().trim();
+                String flightNum = flightNumberField.getText().trim();
+                if (airline.isEmpty())   { highlight(airlineField);       valid = false; }
+                if (flightNum.isEmpty()) { highlight(flightNumberField);  valid = false; }
+                createdItem = valid ? new Flight(title, dateStr, costValue, airline, flightNum) : null;
+            } else if ("Hotel".equals(type)) {
+                String city   = hotelCityField.getText().trim();
+                int    nights = (int) nightsSpinner.getValue();
+                if (city.isEmpty()) { highlight(hotelCityField); valid = false; }
+                createdItem = valid ? new Hotel(title, dateStr, costValue, city, nights) : null;
+            } else if ("Activity".equals(type)) {
+                String location = locationField.getText().trim();
+                if (location.isEmpty()) { highlight(locationField); valid = false; }
+                createdItem = valid ? new Activity(title, dateStr, costValue, location) : null;
+            } else {
+                createdItem = null;
+            }
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this,
                     "Unexpected error: " + ex.getMessage(),

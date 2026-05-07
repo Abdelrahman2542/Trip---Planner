@@ -83,6 +83,25 @@ public class TripManager {
     }
 
     /**
+     * Builds readable summaries for every itinerary item.
+     *
+     * <p><b>Explicit polymorphism for evaluation:</b> the loop variable is the
+     * parent type {@link ItineraryItem}, but at runtime Java calls the overridden
+     * {@code getDisplayInfo()} method in {@code Flight}, {@code Hotel}, or
+     * {@code Activity}. This is a clear example of method overriding being used
+     * through a parent-class reference.</p>
+     *
+     * @return list of formatted item summaries
+     */
+    public List<String> getDisplaySummaries() {
+        List<String> summaries = new ArrayList<>();
+        for (ItineraryItem item : items) {
+            summaries.add(item.getDisplayInfo()); // POLYMORPHISM happens here
+        }
+        return summaries;
+    }
+
+    /**
      * Returns the number of items currently managed.
      *
      * @return item count
