@@ -1,385 +1,331 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JDialog.java to edit this template
+ */
 package tripplanner.ui;
 
-import tripplanner.model.Activity;
-import tripplanner.model.Flight;
-import tripplanner.model.Hotel;
-import tripplanner.model.ItineraryItem;
-
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
-import java.awt.*;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 /**
- * A modal dialog that lets the user enter details for a new itinerary item.
  *
- * <p>Features:</p>
- * <ul>
- *   <li>GridBagLayout for flexible field placement</li>
- *   <li>JSpinner (SpinnerDateModel) for safe date selection — no manual typing</li>
- *   <li>CardLayout panel that swaps specific fields based on item type</li>
- *   <li>Visual validation: highlights empty required fields in red</li>
- * </ul>
- *
- * <p>After the dialog closes, call {@link #getCreatedItem()} to retrieve
- * the item the user saved, or {@code null} if they cancelled.</p>
+ * @author Compumarts
  */
-public class InputForm extends JDialog {
+public class InputForm extends javax.swing.JDialog {
+    private tripplanner.model.ItineraryItem createdItem = null;
 
-    // ---- Common fields ----
-    private JTextField titleField;
-    private JSpinner   dateSpinner;   // replaces the old plain text dateField
-    private JTextField costField;
-
-    // ---- Type selector ----
-    private JComboBox<String> typeComboBox;
-
-    // ---- CardLayout for type-specific fields ----
-    private JPanel     cardsPanel;
-    private CardLayout cardLayout;
-
-    // Flight-specific
-    private JTextField airlineField;
-    private JTextField flightNumberField;
-
-    // Hotel-specific
-    private JTextField hotelCityField;
-    private JSpinner   nightsSpinner;
-
-    // Activity-specific
-    private JTextField locationField;
-
-    /** The item created on Save; remains null if the user cancelled. */
-    private ItineraryItem createdItem = null;
-
-    // Date format used when reading the JSpinner value
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
-
-    // =========================================================================
-    // Constructor
-    // =========================================================================
+    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(InputForm.class.getName());
 
     /**
-     * Constructs and displays the input form dialog.
-     *
-     * @param parent the parent JFrame (used to centre the dialog)
+     * Creates new form InputForm
      */
-    public InputForm(JFrame parent) {
-        super(parent, "Add New Plan", true);
-        setSize(460, 420);
+    public InputForm(java.awt.Frame parent, boolean modal) {
+        super(parent, modal);
+        initComponents();
+        setTitle("Add New Plan");
+        setSize(440, 520);
         setLocationRelativeTo(parent);
         setResizable(false);
 
-        JPanel root = new JPanel(new BorderLayout(0, 0));
-        root.setBorder(new EmptyBorder(16, 16, 12, 16));
+        // Colors â€” reliable way, done in code
+        getContentPane().setBackground(new java.awt.Color(17, 24, 39));
+        applyFormColors();
 
-        root.add(buildTypeRow(),    BorderLayout.NORTH);
-        root.add(buildCenterForm(), BorderLayout.CENTER);
-        root.add(buildButtons(),    BorderLayout.SOUTH);
+        // Date spinner setup
+        dateSpinner.setModel(
+            new javax.swing.SpinnerDateModel(new java.util.Date(),
+            null, null, java.util.Calendar.DAY_OF_MONTH));
+        dateSpinner.setEditor(
+            new javax.swing.JSpinner.DateEditor(dateSpinner, "yyyy-MM-dd"));
 
-        setContentPane(root);
+        // Nights spinner setup
+        nightsSpinner.setModel(new javax.swing.SpinnerNumberModel(1, 1, 365, 1));
     }
+    private void applyFormColors() {
+        java.awt.Color bg    = new java.awt.Color(17,  24,  39);
+        java.awt.Color card  = new java.awt.Color(55,  65,  81);
+        java.awt.Color text  = new java.awt.Color(243, 244, 246);
+        java.awt.Color muted = new java.awt.Color(156, 163, 175);
 
-    // =========================================================================
-    // Panel builders
-    // =========================================================================
-
-    /** Builds the top row containing the "Type" label and ComboBox. */
-    private JPanel buildTypeRow() {
-        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        row.setBorder(new EmptyBorder(0, 0, 10, 0));
-
-        JLabel typeLabel = new JLabel("Item Type:");
-        typeLabel.setFont(new Font("SansSerif", Font.BOLD, 13));
-
-        String[] types = {"Flight", "Hotel", "Activity"};
-        typeComboBox = new JComboBox<>(types);
-        typeComboBox.setFont(new Font("SansSerif", Font.PLAIN, 13));
-        typeComboBox.addActionListener(e -> {
-            String selected = (String) typeComboBox.getSelectedItem();
-            cardLayout.show(cardsPanel, selected);
-        });
-
-        row.add(typeLabel);
-        row.add(typeComboBox);
-        return row;
-    }
-
-    /**
-     * Builds the center area: common fields at the top, type-specific card below.
-     *
-     * @return the assembled center panel
-     */
-    private JPanel buildCenterForm() {
-        JPanel center = new JPanel(new BorderLayout(0, 10));
-
-        // ---- Common section ----
-        JPanel commonPanel = new JPanel(new GridBagLayout());
-        commonPanel.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(new Color(100, 100, 130), 1, true),
-                "General Info"));
-
-        GridBagConstraints gbc = defaultGbc();
-
-        // Title row
-        gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.3;
-        commonPanel.add(label("Title:"), gbc);
-        gbc.gridx = 1; gbc.weightx = 0.7;
-        titleField = new JTextField();
-        commonPanel.add(titleField, gbc);
-
-        // Date row — JSpinner with SpinnerDateModel
-        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0.3;
-        commonPanel.add(label("Date:"), gbc);
-        gbc.gridx = 1; gbc.weightx = 0.7;
-        SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null,
-                java.util.Calendar.DAY_OF_MONTH);
-        dateSpinner = new JSpinner(dateModel);
-        dateSpinner.setEditor(new JSpinner.DateEditor(dateSpinner, "yyyy-MM-dd"));
-        dateSpinner.setFont(new Font("SansSerif", Font.PLAIN, 13));
-        commonPanel.add(dateSpinner, gbc);
-
-        // Cost row
-        gbc.gridx = 0; gbc.gridy = 2; gbc.weightx = 0.3;
-        commonPanel.add(label("Cost ($):"), gbc);
-        gbc.gridx = 1; gbc.weightx = 0.7;
-        costField = new JTextField();
-        commonPanel.add(costField, gbc);
-
-        // ---- Type-specific section (CardLayout) ----
-        cardLayout = new CardLayout();
-        cardsPanel = new JPanel(cardLayout);
-        cardsPanel.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(new Color(100, 100, 130), 1, true),
-                "Specific Info"));
-
-        cardsPanel.add(buildFlightCard(),   "Flight");
-        cardsPanel.add(buildHotelCard(),    "Hotel");
-        cardsPanel.add(buildActivityCard(), "Activity");
-
-        center.add(commonPanel, BorderLayout.NORTH);
-        center.add(cardsPanel,  BorderLayout.CENTER);
-        return center;
-    }
-
-    // ---- Type-specific cards ------------------------------------------------
-
-    /** @return the Flight-specific input card */
-    private JPanel buildFlightCard() {
-        JPanel card = new JPanel(new GridBagLayout());
-        card.setOpaque(false);
-        GridBagConstraints gbc = defaultGbc();
-
-        gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.35;
-        card.add(label("Airline:"), gbc);
-        gbc.gridx = 1; gbc.weightx = 0.65;
-        airlineField = new JTextField();
-        card.add(airlineField, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0.35;
-        card.add(label("Flight No:"), gbc);
-        gbc.gridx = 1; gbc.weightx = 0.65;
-        flightNumberField = new JTextField();
-        card.add(flightNumberField, gbc);
-
-        return card;
-    }
-
-    /** @return the Hotel-specific input card */
-    private JPanel buildHotelCard() {
-        JPanel card = new JPanel(new GridBagLayout());
-        card.setOpaque(false);
-        GridBagConstraints gbc = defaultGbc();
-
-        gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.35;
-        card.add(label("City:"), gbc);
-        gbc.gridx = 1; gbc.weightx = 0.65;
-        hotelCityField = new JTextField();
-        card.add(hotelCityField, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0.35;
-        card.add(label("Nights:"), gbc);
-        gbc.gridx = 1; gbc.weightx = 0.65;
-        nightsSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 365, 1));
-        nightsSpinner.setFont(new Font("SansSerif", Font.PLAIN, 13));
-        card.add(nightsSpinner, gbc);
-
-        return card;
-    }
-
-    /** @return the Activity-specific input card */
-    private JPanel buildActivityCard() {
-        JPanel card = new JPanel(new GridBagLayout());
-        card.setOpaque(false);
-        GridBagConstraints gbc = defaultGbc();
-
-        gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.35;
-        card.add(label("Location:"), gbc);
-        gbc.gridx = 1; gbc.weightx = 0.65;
-        locationField = new JTextField();
-        card.add(locationField, gbc);
-
-        return card;
-    }
-
-    // ---- Buttons bar --------------------------------------------------------
-
-    /** @return the bottom panel containing Save and Cancel buttons */
-    private JPanel buildButtons() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 8));
-
-        JButton saveBtn   = coloredButton("Save",   new Color(137, 180, 130), Color.BLACK);
-        JButton cancelBtn = coloredButton("Cancel", new Color(243, 139, 168), Color.BLACK);
-
-        saveBtn  .addActionListener(e -> saveItem());
-        cancelBtn.addActionListener(e -> dispose());
-
-        panel.add(saveBtn);
-        panel.add(cancelBtn);
-        return panel;
-    }
-
-    // =========================================================================
-    // Save logic
-    // =========================================================================
-
-    /**
-     * Validates all required fields and creates the appropriate {@link ItineraryItem}
-     * subclass (POLYMORPHISM + INHERITANCE).
-     *
-     * <p>On validation failure, offending fields are highlighted with a red border
-     * and an error message is shown.</p>
-     */
-    private void saveItem() {
-        // Reset any previous validation highlights
-        resetBorders();
-
-        String title = titleField.getText().trim();
-        String cost  = costField.getText().trim();
-        String type  = (String) typeComboBox.getSelectedItem();
-
-        boolean valid = true;
-
-        if (title.isEmpty())  { highlight(titleField); valid = false; }
-        if (cost.isEmpty())   { highlight(costField);  valid = false; }
-
-        if (!valid) {
-            JOptionPane.showMessageDialog(this,
-                    "Please fill in all highlighted fields.",
-                    "Input Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        double costValue;
-        try {
-            costValue = Double.parseDouble(cost);
-            if (costValue < 0) throw new NumberFormatException();
-        } catch (NumberFormatException ex) {
-            highlight(costField);
-            JOptionPane.showMessageDialog(this,
-                    "Cost must be a positive number (e.g. 150.00).",
-                    "Input Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        // Read the date from JSpinner (always valid — no free-text input)
-        Date   selectedDate = (Date) dateSpinner.getValue();
-        String dateStr      = DATE_FORMAT.format(selectedDate);
-
-        // INHERITANCE + POLYMORPHISM: create the right subclass
-        try {
-            if ("Flight".equals(type)) {
-                String airline   = airlineField.getText().trim();
-                String flightNum = flightNumberField.getText().trim();
-                if (airline.isEmpty())   { highlight(airlineField);       valid = false; }
-                if (flightNum.isEmpty()) { highlight(flightNumberField);  valid = false; }
-                createdItem = valid ? new Flight(title, dateStr, costValue, airline, flightNum) : null;
-            } else if ("Hotel".equals(type)) {
-                String city   = hotelCityField.getText().trim();
-                int    nights = (int) nightsSpinner.getValue();
-                if (city.isEmpty()) { highlight(hotelCityField); valid = false; }
-                createdItem = valid ? new Hotel(title, dateStr, costValue, city, nights) : null;
-            } else if ("Activity".equals(type)) {
-                String location = locationField.getText().trim();
-                if (location.isEmpty()) { highlight(locationField); valid = false; }
-                createdItem = valid ? new Activity(title, dateStr, costValue, location) : null;
-            } else {
-                createdItem = null;
+        // All labels â†’ muted color
+        for (java.awt.Component c : getContentPane().getComponents()) {
+            if (c instanceof javax.swing.JLabel) {
+                c.setForeground(muted);
             }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this,
-                    "Unexpected error: " + ex.getMessage(),
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            return;
         }
 
-        if (!valid) {
-            JOptionPane.showMessageDialog(this,
-                    "Please fill in the highlighted type-specific fields.",
-                    "Input Error", JOptionPane.ERROR_MESSAGE);
-            createdItem = null;
-            return;
-        }
+        // Inputs â†’ dark surface color
+        titleField.setBackground(card);
+        titleField.setForeground(text);
+        titleField.setCaretColor(text);
 
-        dispose(); // Close dialog — success
-    }
+        costField.setBackground(card);
+        costField.setForeground(text);
+        costField.setCaretColor(text);
 
-    // =========================================================================
-    // Utilities
-    // =========================================================================
+        extraField.setBackground(card);
+        extraField.setForeground(text);
+        extraField.setCaretColor(text);
 
-    /**
-     * Returns the itinerary item created by the user, or {@code null} if cancelled.
-     *
-     * @return the new {@link ItineraryItem}, or {@code null}
-     */
-    public ItineraryItem getCreatedItem() {
+        typeComboBox.setBackground(card);
+        typeComboBox.setForeground(text);
+
+        dateSpinner.setBackground(card);
+        dateSpinner.setForeground(text);
+
+        nightsSpinner.setBackground(card);
+        nightsSpinner.setForeground(text);
+
+        // Buttons
+        cancelBtn.setBackground(card);
+        cancelBtn.setForeground(text);
+        cancelBtn.setOpaque(true);
+
+        saveBtn.setBackground(new java.awt.Color(52, 211, 153));
+        saveBtn.setForeground(new java.awt.Color(17, 24, 39));
+        saveBtn.setOpaque(true);
+}
+
+    public tripplanner.model.ItineraryItem getCreatedItem() {
         return createdItem;
     }
 
-    /** Builds a pre-configured GridBagConstraints for standard two-column form rows. */
-    private GridBagConstraints defaultGbc() {
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets  = new Insets(5, 6, 5, 6);
-        gbc.fill    = GridBagConstraints.HORIZONTAL;
-        gbc.anchor  = GridBagConstraints.WEST;
-        return gbc;
-    }
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">                          
+    private void initComponents() {
 
-    /** Creates a bold form label. */
-    private JLabel label(String text) {
-        JLabel lbl = new JLabel(text);
-        lbl.setFont(new Font("SansSerif", Font.BOLD, 13));
-        return lbl;
-    }
+        jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        typeComboBox = new javax.swing.JComboBox<>();
+        jLabel3 = new javax.swing.JLabel();
+        titleField = new javax.swing.JTextField();
+        dateSpinner = new javax.swing.JSpinner();
+        jLabel4 = new javax.swing.JLabel();
+        jLabel5 = new javax.swing.JLabel();
+        costField = new javax.swing.JTextField();
+        extraField = new javax.swing.JTextField();
+        jLabel6 = new javax.swing.JLabel();
+        jLabel7 = new javax.swing.JLabel();
+        nightsSpinner = new javax.swing.JSpinner();
+        cancelBtn = new javax.swing.JButton();
+        saveBtn = new javax.swing.JButton();
 
-    /** Creates a button with custom background and foreground colors. */
-    private JButton coloredButton(String text, Color bg, Color fg) {
-        JButton btn = new JButton(text);
-        btn.setFont(new Font("SansSerif", Font.BOLD, 13));
-        btn.setBackground(bg);
-        btn.setForeground(fg);
-        btn.setFocusPainted(false);
-        btn.setBorderPainted(false);
-        btn.setOpaque(true);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        return btn;
-    }
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
-    /** Applies a red border to a text field to signal a validation error. */
-    private void highlight(JTextField field) {
-        field.setBorder(new LineBorder(Color.RED, 2, true));
-    }
+        jLabel1.setFont(new java.awt.Font("SansSerif", 1, 24)); // NOI18N
+        jLabel1.setText("âœˆ  Add New Plan");
 
-    /** Resets all text-field borders to their default look. */
-    private void resetBorders() {
-        for (JTextField f : new JTextField[]{
-                titleField, costField,
-                airlineField, flightNumberField,
-                hotelCityField, locationField}) {
-            if (f != null) f.setBorder(UIManager.getBorder("TextField.border"));
+        jLabel2.setText("Item Type:");
+
+        typeComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Flight", "Hotel", "Activity" }));
+
+        jLabel3.setText("Title:");
+
+        jLabel4.setText("Date:");
+
+        jLabel5.setText("Cost ($):");
+
+        extraField.addActionListener(this::extraFieldActionPerformed);
+
+        jLabel6.setText("Airline / City / Location:");
+
+        jLabel7.setText("Nights (hotel only):");
+
+        cancelBtn.setFont(new java.awt.Font("SansSerif", 1, 14)); // NOI18N
+        cancelBtn.setText("âœ•  Cancel");
+        cancelBtn.addActionListener(this::cancelBtnActionPerformed);
+
+        saveBtn.setFont(new java.awt.Font("SansSerif", 1, 14)); // NOI18N
+        saveBtn.setText("âœ”  Save");
+        saveBtn.addActionListener(this::saveBtnActionPerformed);
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(jLabel1))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                            .addGap(131, 131, 131)
+                            .addComponent(cancelBtn)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(saveBtn))
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                            .addGap(35, 35, 35)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                .addComponent(jLabel4)
+                                .addComponent(jLabel3)
+                                .addComponent(jLabel5)
+                                .addComponent(jLabel2)
+                                .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jLabel7))
+                            .addGap(18, 18, 18)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                .addComponent(nightsSpinner)
+                                .addComponent(dateSpinner)
+                                .addComponent(typeComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(titleField)
+                                .addComponent(costField)
+                                .addComponent(extraField, javax.swing.GroupLayout.PREFERRED_SIZE, 157, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                .addContainerGap(115, Short.MAX_VALUE))
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(14, 14, 14)
+                .addComponent(jLabel1)
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(typeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel2))
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(titleField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel3))
+                .addGap(26, 26, 26)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(dateSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel4))
+                .addGap(33, 33, 33)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(costField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel5))
+                .addGap(31, 31, 31)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(extraField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel6))
+                .addGap(27, 27, 27)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(nightsSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel7))
+                .addGap(29, 29, 29)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cancelBtn)
+                    .addComponent(saveBtn))
+                .addContainerGap(74, Short.MAX_VALUE))
+        );
+
+        pack();
+    }// </editor-fold>                        
+
+    private void extraFieldActionPerformed(java.awt.event.ActionEvent evt) {                                           
+        // TODO add your handling code here:
+    }                                          
+
+    private void saveBtnActionPerformed(java.awt.event.ActionEvent evt) {                                        
+        String title   = titleField.getText().trim();
+        String costTxt = costField.getText().trim();
+        String extra   = extraField.getText().trim();
+        String type    = (String) typeComboBox.getSelectedItem();
+
+        if (title.isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(this,
+                "Title cannot be empty.");
+            return;
         }
+        if (costTxt.isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(this,
+                "Cost cannot be empty.");
+            return;
+        }
+        if (extra.isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(this,
+                "Please fill in Airline / City / Location.");
+            return;
+        }
+
+        double cost;
+        try {
+            cost = Double.parseDouble(costTxt);
+            if (cost < 0) throw new NumberFormatException();
+        } catch (NumberFormatException e) {
+            javax.swing.JOptionPane.showMessageDialog(this,
+                "Cost must be a positive number.");
+            return;
+        }
+
+        java.util.Date d = (java.util.Date)
+            ((javax.swing.SpinnerDateModel) dateSpinner.getModel()).getValue();
+        String date = new java.text.SimpleDateFormat("yyyy-MM-dd").format(d);
+
+        if ("Flight".equals(type)) {
+            createdItem = new tripplanner.model.Flight(
+                title, date, cost, extra, "N/A");
+        } else if ("Hotel".equals(type)) {
+            int nights = (int) nightsSpinner.getValue();
+            createdItem = new tripplanner.model.Hotel(
+                title, date, cost, extra, nights);
+        } else {
+            createdItem = new tripplanner.model.Activity(
+                title, date, cost, extra);
+        }
+
+        dispose();
+    }                                       
+
+    private void cancelBtnActionPerformed(java.awt.event.ActionEvent evt) {                                          
+        createdItem = null;
+        dispose();
+    }                                         
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String args[]) {
+        /* Set the Nimbus look and feel */
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         */
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
+            logger.log(java.util.logging.Level.SEVERE, null, ex);
+        }
+        //</editor-fold>
+
+        /* Create and display the dialog */
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                InputForm dialog = new InputForm(new javax.swing.JFrame(), true);
+                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                    @Override
+                    public void windowClosing(java.awt.event.WindowEvent e) {
+                        System.exit(0);
+                    }
+                });
+                dialog.setVisible(true);
+            }
+        });
     }
+
+    // Variables declaration - do not modify                     
+    private javax.swing.JButton cancelBtn;
+    private javax.swing.JTextField costField;
+    private javax.swing.JSpinner dateSpinner;
+    private javax.swing.JTextField extraField;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
+    private javax.swing.JSpinner nightsSpinner;
+    private javax.swing.JButton saveBtn;
+    private javax.swing.JTextField titleField;
+    private javax.swing.JComboBox<String> typeComboBox;
+    // End of variables declaration                   
 }
